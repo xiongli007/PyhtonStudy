@@ -229,7 +229,6 @@ def main():
                                 shopping_car[username] = {p_item: [price, int(num), ]}
                             else:
                                 shopping_car[username].setdefault(p_item, [price, int(num), ])  # 选择宝贝放入购物车 宝贝 ：【单价，数量，】
-                                #     todo 数据插入历史数据
                                 if not shopping_car_his.get(username):              # 如果无此帐号历史数据
                                     shopping_car_his.setdefault(username, {p_item: [price, int(num)]})
                                 elif not shopping_car_his[username].get(p_item):  # 无此宝贝记录
