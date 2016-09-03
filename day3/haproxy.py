@@ -3,6 +3,8 @@
 # Author : xiongli
 
 import json
+import time
+import shutil
 
 IP_ADDR = ''
 WEIGHT = 0
@@ -177,9 +179,7 @@ def copy_file():
     入参：文件名
     返回值：无
     '''
-    import time
-    import shutil
-    shutil.copyfile('ha.conf', time.strftime('%Y%m%d') + 'ha.conf')
+    shutil.copyfile('ha.conf', './bak/'+time.strftime('%Y%m%d%H%M%S') + 'ha.conf')
     print('配置文件备份为：' + time.strftime('%Y%m%d') + 'ha.conf')
 
 
@@ -189,8 +189,10 @@ def rename_file(old_name, new_name):
     返回值： 无
     '''
     import os
-    os.rename(old_name, old_name+'bak')
+    bak_name = time.strftime('%Y%m%d%H%M%S') + old_name
+    os.rename(old_name, bak_name)
     os.rename(new_name, old_name)
+    os.remove(bak_name)
 
 
 def main():
