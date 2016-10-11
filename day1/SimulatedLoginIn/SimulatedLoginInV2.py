@@ -4,13 +4,16 @@
 
 import getpass      ###输入密码时不在屏幕上显示
 INPUT ={}
-###检查帐号是否加锁
+# ##检查帐号是否加锁
+
+
 def CheckLock(username):
     with open('lock.txt', 'r') as lock:                    ##读加锁帐号文件信息
         for i in lock:                                 ##循环读出的加锁信息
             if i.split() == username.split():           ##切片，踢掉换行符，进行内容比较，如果相等 返回True
                 return True
     return False                                       ##否则返回False
+
 
 def CheckErrorCount(username):
     if INPUT[username] >= 3:
