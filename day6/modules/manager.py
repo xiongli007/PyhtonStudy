@@ -323,32 +323,6 @@ class Student:
             study_name = self.log[j]
             print('{}       {}          {}'.format(number, study_name, j))
 
-                # print(info)
-        #   [课程名, 授课老师, 学时,上课时间]
-        # if not user_log.get('study_record'):
-        #     print('\033[31;1m您还没有任何上课记录\033')
-        #     return False
-        # else:
-        #     print('\033[34;1m 您的上课记录 \033[0m'.center(80,'@'))
-        #     title = '序号      课程名      老湿       学时       课时费     上课时间'
-        #     Format = '{}       {}       {}        {}         {}         {}'
-        #     print(title)
-        #     for i in range(len(studentdb['study_record'])):
-        #         print(Format.format(
-        #             i,studentdb['study_record'][i][0],
-        #             studentdb['study_record'][i][1],
-        #             studentdb['study_record'][i][2],
-        #             studentdb['study_record'][i][3],
-        #             studentdb['study_record'][i][4]
-        #         ))
-        #     print('@'*74)
-        #     print('\033[31;1m用户名:[ %s ], 学号: [ %s ], 共消费: [ %.2f ], 可用余额: [ %.2f ]\033[0m'%(user,
-        #                                                                      studentdb['studentid'],
-        #                                                                     studentdb['assets']-studentdb['balance'],
-        #                                                                     studentdb['balance']))
-        #
-        #     if input('按下回车键继续...'):pass
-
 
 class Manager(Teacher, Course):
     '''
@@ -496,18 +470,3 @@ class Manager(Teacher, Course):
                 print('用户名或者密码错误!')
                 return False
 
-
-# ax = Student('xiongli')
-# # a = Manager()
-# ax.show_study_history()
-# a.add_course()
-# ax.chose_course()
-# ax.class_begin()
-# teacher_dict = pickle.load(open(os.path.join(setting.PATH_STUDENT, 'xiongli'), 'rb'))
-# print(teacher_dict['xiongli'])
-# a = Manager()
-# a.add_course()
-# a = pickle.load(open(os.path.join(setting.PATH_STUDENT, 'xiongli'), 'rb'))
-# print(a)
-# a = pickle.load(open(os.path.join(setting.PATH_DB, 'course.db'), 'rb'))
-# print(a)
