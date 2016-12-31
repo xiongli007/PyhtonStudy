@@ -46,7 +46,6 @@ class Ftpserver(object):
         pass_word = msg[2]
         self.user_name = user_name
         login_dict = pickle.load(open(os.path.join(setting.PATH_DB, 'login.pkl'), 'rb'))
-        print(login_dict)
         rs = ''
         if user_name in login_dict.keys():
 
@@ -58,7 +57,7 @@ class Ftpserver(object):
                 rs = '2'
         else:
             rs = '2'
-        self.conn.send(rs.encode('utf-8'))
+        self.conn.send(rs.encode())
 
     def ls(self, msg):
         '''
@@ -108,6 +107,5 @@ class Ftpserver(object):
                 send_data = 0
             self.conn.send(send_data)
 
-
-# a ={'x1': {'name': 'xx', 'password': '123', 'path': 'C:/x1'}, 'ftp': {'name': 'ftp', 'password': '123', 'path': '/ftp'}}
+# a ={'x1': {'name': 'xx', 'password': '123', 'path': '/x1'}, 'ftp': {'name': 'ftp', 'password': '123', 'path': '/ftp'}}
 # pickle.dump(a, open(os.path.join(setting.PATH_DB, 'login.pkl'), 'wb'))

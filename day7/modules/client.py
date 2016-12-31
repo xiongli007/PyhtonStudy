@@ -16,6 +16,10 @@ class Ftp_client(object):
         self.client.close()
 
     def login_in(self):
+        '''
+        登录功能
+        :return:
+        '''
         while not self.login_flag:
             print('请输入登录名：')
             user_name = input('>>').strip()
@@ -32,16 +36,15 @@ class Ftp_client(object):
                 print('帐号：' + user_name + ' 输入的帐号或密码错误!')
 
     def cmd(self):
+        '''
+        命令解析
+        :return:
+        '''
         while self.login_flag:
-            print('请输入操作命令(查看当前目录文件：ls \t上传：put+文件名 \t下载：get+文件名 )：')
+            print('请输入操作命令(查看当前目录文件：ls \t上传：put+文件名 \t下载：get+文件名+本地目录)：')
             cmd_input = input('>>').strip()
             if len(cmd_input) == 0: continue
             cmd_list = cmd_input.split()
-
-            # ftp_dict ={'ls': self.ls(),
-            #            'put': self.put(),
-            #            'get': self.get()
-            #            }
 
             if hasattr(self, cmd_list[0]):              # 通过反射找到输入的命令方法
                 function = getattr(self, cmd_list[0])   # 得到方法名
@@ -67,11 +70,11 @@ class Ftp_client(object):
         :param msg:
         :return:
         '''
-        self.client.send(('put|' + msg[1]).encode())  # 发送PUT命令
-        # user_path = self.client.recv(10240).decode()    # 接收PUT路径
-        data = self.client.recv(10240).decode()
-        print("数据将存放至： {}".format(data))
         if os.path.isfile(msg[1]):     # 判断文件是否存在
+            self.client.send(('put|' + msg[1]).encode())  # 发送PUT命令
+            # user_path = self.client.recv(10240).decode()    # 接收PUT路径
+            data = self.client.recv(10240).decode()
+            print("数据将存放至： {}".format(data))
             size = os.path.getsize(msg[1])
             self.client.send(str(size).encode())  # 发送文件大小
             data = self.client.recv(10240)
@@ -91,27 +94,23 @@ class Ftp_client(object):
         :return:
         '''
         get_file = os.path.basename(msg[1])
-        self.client.send(('get|' + msg[1] + '|' + msg[2]).encode())  # 发送get命令
-        size = self.client.recv(10240).decode().split('|')
+        get_to_file = os.path.isdir(msg[2])
+        if get_to_file:
+            self.client.send(('get|' + msg[1] + '|' + msg[2]).encode())  # 发送get命令
+            size = self.client.recv(10240).decode().split('|')
 
-        if size[0] != 'True':
-            print("需要get的文件不存在")
+            if size[0] != 'True':
+                print("需要get的文件不存在")
+            else:
+                print("数据将存放至：{}, 文件大小为：{}".format(msg[2], size[1]))
+                self.client.send('ready'.encode())
+                print('数据接收中....')
+                file = self.client.recv(10240)  # 接收文件
+                with open(os.path.join(msg[2], get_file), 'wb') as f:
+                    f.write(file)
+
+                f_size = os.path.getsize(os.path.join(msg[2], get_file))
+                if f_size == int(size[1]):
+                    print('数据接收完成')
         else:
-            print("数据将存放至：{}, 文件大小为：".format(msg[2], size[1]))
-            self.client.send('ready'.encode())
-            print('数据接收中....')
-            file = self.client.recv(10240)  # 接收文件
-            with open(os.path.join(msg[2], get_file), 'wb') as f:
-                f.write(file)
-
-            f_size = os.path.getsize(os.path.join(msg[2], get_file))
-            if f_size == int(size[1]):
-                print('数据接收完成')
-
-
-client = Ftp_client()
-client.login_in()
-
-if client.login_flag:
-    client.cmd()
-
+            print('get的目标文件不存在')
