@@ -108,10 +108,6 @@ class Ftpserver(object):
                 send_data = 0
             self.conn.send(send_data)
 
-# server_ftp = Ftpserver()
-#
-# while True:
-#     server_ftp.run()
 
 # a ={'x1': {'name': 'xx', 'password': '123', 'path': 'C:/x1'}, 'ftp': {'name': 'ftp', 'password': '123', 'path': '/ftp'}}
 # pickle.dump(a, open(os.path.join(setting.PATH_DB, 'login.pkl'), 'wb'))
