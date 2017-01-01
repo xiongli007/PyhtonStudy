@@ -25,7 +25,8 @@
 |服务端模块     |server.py        |/day7/modules |
 
 ##使用说明：
-基于socket 实现简易FTP功能
+基于socket 实现简易FTP功能；仅支持linux系统，使用前需建立对应账户HOME目录；
+x1 -->/x1; ftp-->ftp;
 * FTP帐号：
 ```
 帐号/密码： 
