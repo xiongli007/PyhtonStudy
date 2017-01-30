@@ -69,11 +69,11 @@ class MyServer(socketserver.BaseRequestHandler):
             if login_dict[user_name]['password'] == pass_word:
                 self.login_type = True
                 self.path = login_dict[user_name]['user_path']
-                rs = '1'
+                rs = '200'
             else:
-                rs = '2'
+                rs = '400'
         else:
-            rs = '2'
+            rs = '400'
         self.request.send(rs.encode())
 
     def ls(self, msg):
@@ -83,7 +83,13 @@ class MyServer(socketserver.BaseRequestHandler):
         :return:
         '''
         res = subprocess.Popen('ls -rlt', shell=True, stdout=subprocess.PIPE, cwd=self.path)  # 查询当前目录下文件
-        self.conn.send(res.stdout.read())
+        res_data = res.stdout.read()
+        msg_dic = {
+            "size": len(res_data),
+        }
+        self.request.send(json.dumps(msg_dic).encode())
+        self.request.recv(1024)
+        self.request.send(res_data)
 
     def put(self, msg):
         '''
@@ -97,7 +103,7 @@ class MyServer(socketserver.BaseRequestHandler):
             self.request.send(b'400')   # 用户配额不足
         else:
             self.request.send(b'200')  # 用户配额足
-            file = self.request.recv(10240)           # 接收文件
+            file = self.request.recv(1024)           # 接收文件
             with open(os.path.join(self.path, msg["filename"]), 'wb') as f:
                 f.write(file)
 
@@ -114,17 +120,17 @@ class MyServer(socketserver.BaseRequestHandler):
         get_file = os.path.basename(msg[1])
         file_path = os.path.join(self.path, get_file)
         if not os.path.isfile(file_path):
-            self.conn.send('False|0'.encode())
+            self.request.send('False|0'.encode())
         else:
             size = os.path.getsize(file_path)
-            self.conn.send(('True|' + str(size)).encode())  # 发送成功标示、文件大小
-            data = self.conn.recv(10240).decode()
+            self.request.send(('True|' + str(size)).encode())  # 发送成功标示、文件大小
+            data = self.request.recv(10240).decode()
             if data == 'ready':
                 with open(file_path, 'rb') as f:
                     send_data = f.read()
             else:
                 send_data = 0
-            self.conn.send(send_data)
+            self.request.send(send_data)
 
 # a ={'x1': {'name': 'xx', 'password': '123', 'path': '/x1'}, 'ftp': {'name': 'ftp', 'password': '123', 'path': '/ftp'}}
 # pickle.dump(a, open(os.path.join(setting.PATH_DB, 'login.pkl'), 'wb'))

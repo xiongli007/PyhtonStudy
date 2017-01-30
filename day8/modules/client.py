@@ -52,7 +52,7 @@ class Ftp_client(object):
             print(msg)
             self.client.send(json.dumps(msg).encode())
             data = self.client.recv(1024)
-            if data.decode('utf-8') == '1':
+            if data.decode('utf-8') == '200':
                 print('帐号：' + user_name + ' 登录成功!')
                 self.login_flag = True
             else:
@@ -61,15 +61,29 @@ class Ftp_client(object):
             if err_cont > 3:
                 break
 
-    def ls(self, msg):
+    def cmd_ls(self, msg):
         '''
         查询文件
         :param msg:
         :return:
         '''
-        self.client.send('ls|0'.encode())    # 发送ls 查询命令
-        data = self.client.recv(10240)
-        print(data.decode())        # 打印接收结果
+        msg_dic = {
+            "action": "ls",
+        }
+        self.client.send(json.dumps(msg_dic).encode())    # 发送ls 查询命令
+        msg_dic1 = json.loads(str(self.client.recv(1024).decode()))
+        print(msg_dic1)
+        if msg_dic1["size"] == 0:
+            print("查无文件")
+        else:
+            self.client.send(b'200')
+            received_size = 0
+            cmd_res = b''
+            while received_size != msg_dic1["size"]:  # 没收完,继续收
+                data = self.client.recv(1024)
+                received_size += len(data)
+                cmd_res += data
+            print(cmd_res.decode())        # 打印接收结果
 
     def cmd_put(self, *args):
         '''
@@ -135,7 +149,7 @@ class Ftp_client(object):
 
     def run(self):
         self.connect(setting.SERVER_IP, setting.SERVER_PORT)
-        # self.login_in()
+        self.login_in()
         self.login_flag = True
         if self.login_flag:
             print('请输入操作命令：')
