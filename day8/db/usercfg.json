@@ -4,6 +4,15 @@
     "username": "xx",
     "password": "063b77ed96e433f605c772d59dbd2a73",
     "user_size": 102400,
-    "user_path": "/xx"
+    "user_path": "/xx",
+    "home_path": "/xx"
+  },
+  "xo":
+  {
+    "username": "xo",
+    "password": "063b77ed96e433f605c772d59dbd2a73",
+    "user_size": 102400000,
+    "user_path": "I:\\xx",
+    "home_path": "I:\\xx"
   }
 }

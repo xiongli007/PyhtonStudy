@@ -4,13 +4,15 @@
 
 # 环境变量，路径设置
 
-import os
+import os, json
 
 PATH = os.path.dirname(os.path.dirname(__file__))
 PATH_DB = os.path.join(PATH, 'db')
 PATH_modules = os.path.join(PATH, 'modules')
 PATH_LOG = os.path.join(PATH, 'log')
 PATH_USE = os.path.join(PATH_DB, 'usercfg.json')
+PATH_LOGFILE = os.path.join(PATH_LOG, 'log.log')
+
 
 SERVER_IP = 'localhost'
 SERVER_PORT = 9999

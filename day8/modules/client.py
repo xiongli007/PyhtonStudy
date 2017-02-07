@@ -3,10 +3,21 @@
 # Author : xiongli
 
 
-import socket, os, json, hashlib, sys
-import subprocess
+import socket, os, json, hashlib, sys,time
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from conf import setting
+
+
+def progressbar(x, width=100):
+    pointer = int(width * (x / 100.0))
+    sys.stdout.write('\r%d%% [%s]' % (int(x), '#' * pointer + ' ' * (width - pointer)))
+    sys.stdout.flush()
+    if x == 100: print()
+
+if __name__ == '__main__':
+    for a in range(0, 101):
+        progressbar(a)
+        time.sleep(0.1)
 
 
 class Ftp_client(object):
@@ -18,7 +29,7 @@ class Ftp_client(object):
         self.client.close()
 
     def help(self):
-        msg = '''
+        msg = '''请使用以下命令：
         ls
         pwd
         cd
@@ -49,7 +60,6 @@ class Ftp_client(object):
                 "username": user_name,
                 "pass_word": pass_word_md5.hexdigest()
             }
-            print(msg)
             self.client.send(json.dumps(msg).encode())
             data = self.client.recv(1024)
             if data.decode('utf-8') == '200':
@@ -83,7 +93,7 @@ class Ftp_client(object):
                 data = self.client.recv(1024)
                 received_size += len(data)
                 cmd_res += data
-            print(cmd_res.decode())        # 打印接收结果
+            print(cmd_res.decode(msg_dic1["de_code"]))        # 打印接收结果
 
     def cmd_put(self, *args):
         '''
@@ -91,6 +101,7 @@ class Ftp_client(object):
         :param msg:
         :return:
         '''
+
         msg = args[0].split()
         if len(args[0].split()) > 1:
             filename = msg[1]
@@ -105,47 +116,117 @@ class Ftp_client(object):
                 data = self.client.recv(1024).decode()    # 服务器进行配额检测
                 # 200 正常 400 配额不足
                 if data == '200':
-                    print(data.decode())
-                f = open(msg[1], 'rb')
-                print('发送数据中....')
-                for line in f:
-                    self.client.send(line)       # 发送文件
-                print('数据发送完成！')
-                f.close()
-                data = self.client.recv(10240).decode()
-                print(data)
+                    m = hashlib.md5()  # 生成md5文件完整码
+                    f = open(msg[1], 'rb')
+                    send_size = 0
+                    for line in f:
+                        self.client.send(line)
+                        send_size += len(line)
+                        progressbar(send_size/size*100)   # 调用进度条函数
+                        m.update(line)
+                    f.close()
+                    data = self.client.recv(1024).decode()
+                    print(data)
+                    # 校验文件MD5值
+                    md5sum = m.hexdigest()
+                    self.client.send(md5sum.encode())
+                    rec = int(self.client.recv(1024))
+                    if rec == 200:
+                        print('文件完整性校验成功！')
+                    else:
+                        print('文件完整性校验不成功，请检查！')
+                else:
+                    print('帐号磁盘配额不足！')
             else:
                 print('%s文件未找到！' % msg[1])
         else:
             print("参数有误！")
 
-    def cmd_get(self, msg):
+    def cmd_get(self, *args):
         '''
         从服务器帐号HOME目录获取文件
         :param msg: get 文件名 获取到本地目录
         :return:
         '''
+
+        msg = args[0].split()
         get_file = os.path.basename(msg[1])
-        get_to_file = os.path.isdir(msg[2])
-        if get_to_file:
-            self.client.send(('get|' + msg[1] + '|' + msg[2]).encode())  # 发送get命令
-            size = self.client.recv(10240).decode().split('|')
-
-            if size[0] != 'True':
-                print("需要get的文件不存在")
-            else:
-                print("数据将存放至：{}, 文件大小为：{}".format(msg[2], size[1]))
-                self.client.send('ready'.encode())
-                print('数据接收中....')
-                file = self.client.recv(10240)  # 接收文件
-                with open(os.path.join(msg[2], get_file), 'wb') as f:
-                    f.write(file)
-
-                f_size = os.path.getsize(os.path.join(msg[2], get_file))
-                if f_size == int(size[1]):
-                    print('数据接收完成')
+        if len(msg) > 2:  # 判断是否存在重命名
+            get_to_file = msg[2]
         else:
-            print('get的目标文件不存在')
+            get_to_file = get_file
+
+        msg_dic = {
+            "action": "get",
+            "filename": get_file,
+            "get_to_file": get_to_file,
+            "size": 0,
+            "md5": "",
+        }
+        self.client.send(json.dumps(msg_dic).encode())  # 发送get命令
+
+        rec_dic = json.loads(self.client.recv(1024).decode())
+        if not rec_dic["is_file"]:
+            print("需要get的文件不存在")
+        else:
+            print("文件名为：{}, 文件大小为：{}".format(get_to_file, rec_dic["size"]))
+            self.client.send(b'200')
+            print('数据接收中....')
+            file_size = 0
+            m = hashlib.md5()
+            with open(get_to_file, 'wb') as f:
+                while file_size < rec_dic["size"]:
+                    file = self.client.recv(1024)  # 接收文件
+                    file_size += len(file)
+                    f.write(file)
+                    m.update(file)
+                    progressbar(file_size/rec_dic["size"]*100)  # 调用进度条函数
+            f_size = os.path.getsize(get_to_file)
+            md5sum = m.hexdigest()
+            if f_size == rec_dic["size"]:
+                print('数据接收完成')
+                self.client.send(b'200')
+                data = self.client.recv(1024).decode()
+                if md5sum == data:
+                    print('文件完整性校验成功!')
+                else:
+                    print('文件完整性校验不成功，请检查！')
+            else:
+                print('数据接未收完成')
+
+
+    def cmd_pwd(self, *args):
+        msg_dic = {
+            "action": "pwd",
+        }
+        self.client.send(json.dumps(msg_dic).encode())
+        rec = self.client.recv(1024).decode()
+        print(rec)
+
+    def cmd_cd(self, *args):
+        if args[0] == 'cd':
+            path = 'HOME'
+        else:
+            path = args[0].split()[1]
+
+        msg_dic = {
+            "action": "cd",
+            "path": path,
+        }
+        self.client.send(json.dumps(msg_dic).encode())
+        rec_dic = json.loads(self.client.recv(1024).decode())
+        if rec_dic["run_code"] != 200:
+            print('输入的路径有误！')
+        else:
+            print('当前路径为：{}'.format(rec_dic["run_path"]))
+
+    def cmd_quit(self, *args):
+        msg_dic = {
+            "action": "quit",
+        }
+        self.client.send(json.dumps(msg_dic).encode())
+        quit('bye bye!')
+        self.__del__()
 
     def run(self):
         self.connect(setting.SERVER_IP, setting.SERVER_PORT)
